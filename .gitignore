@@ -1,3 +1,4 @@
 start_deep
 .ipynb_checkpoints
 .idea
+*.ipynb
