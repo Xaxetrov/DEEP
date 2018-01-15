@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import cv2
 
@@ -18,14 +20,26 @@ def get_trainset_list():
     positives = [x.strip() for x in positives]
     positives = list(map(lambda x: x.split(), positives))
     positive_images, positive_labels = zip(*positives)
+    positive_shuffle = list(range(len(positive_images)))
+    random.shuffle(positive_shuffle)
+    positive_images_r = [positive_images[i] for i in positive_shuffle]
+    positive_images_r = positive_images_r[:N_POSITIVES]
+    positive_labels_r = [positive_labels[i] for i in positive_shuffle]
+    positive_labels_r = positive_labels_r[:N_POSITIVES]
 
     with open(negatives_path) as nf:
         negatives = nf.readlines()
     negatives = [x.strip() for x in negatives]
     negatives = list(map(lambda x: x.split(), negatives))
     negative_images, negative_labels = zip(*negatives)
+    negative_shuffle = list(range(len(negative_images)))
+    random.shuffle(negative_shuffle)
+    negative_images_r = [negative_images[i] for i in negative_shuffle]
+    negative_images_r = negative_images_r[:N_NEGATIVES]
+    negative_labels_r = [negative_labels[i] for i in negative_shuffle]
+    negative_labels_r = negative_labels_r[:N_NEGATIVES]
 
-    return positive_images, positive_labels, negative_images, negative_labels
+    return positive_images_r, positive_labels_r, negative_images_r, negative_labels_r
 
 
 def read_image(file_path):
@@ -40,7 +54,7 @@ def prep_data(images):
     for i, image_file in enumerate(images):
         image = read_image(train_directory + image_file)
         data[i] = image.T
-        if i % 250 == 0: print('Processed {} of {}'.format(i, count))
+        if i % 250 == 0 : print('Processed {} of {}'.format(i, count))
 
     return data
 
