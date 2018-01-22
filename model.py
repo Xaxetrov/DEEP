@@ -36,7 +36,7 @@ class CustomModel:
 
     def train(self):
 
-        positive_images, positive_labels, negative_images, negative_labels = get_trainset_list(5000, 5000)
+        positive_images, positive_labels, negative_images, negative_labels = get_trainset_list(700, 700)
 
         mischung_images = np.concatenate((positive_images, negative_images), axis=0)
         mischung_labels = np.concatenate((positive_labels, negative_labels))

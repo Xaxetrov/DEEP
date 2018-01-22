@@ -1,16 +1,19 @@
 import random
-
+import glob
 import numpy as np
 from PIL import Image
 from PIL import ImageDraw
-
 import matplotlib.pyplot as plt
 
-class Pyramide:
+from image_cropper import crop
 
-    def __init__(self, model):
+
+class Pyramid:
+
+    def __init__(self, model, threshold=0.99):
         self.model = model
-        self.threshold = 0.99
+        self.threshold = threshold
+        self.chunk = 36
 
     def __model_wrapper(self, img):
 
@@ -20,7 +23,8 @@ class Pyramide:
 
         return self.model.predict(cpy_img)[0, 1] > self.threshold
 
-    def __sample_img(self, img, strides, chunk):
+    @staticmethod
+    def __sample_img(img, strides, chunk):
         """
         Generator. sample an image given the parameters
         param img : the image to sample
@@ -48,14 +52,13 @@ class Pyramide:
                 where each scale is decreased by 20% each time (if you begin with scale 1, you have :
                 [outs1, outs0.8, outs0.64, ...])
         """
-        chunk = 36
 
-        if int(img.size[0] * scale) <= chunk + strides[0] or int(img.size[1] * scale) <= chunk + strides[1]:
+        if int(img.size[0] * scale) < self.chunk or int(img.size[1] * scale) < self.chunk:
             return []
         img_cpy = img.resize((int(img.size[0] * scale), int(img.size[1] * scale)))
         img_as_arr = np.asarray(img_cpy)
         output = - np.ones((img_as_arr.shape[0] // strides[0], img_as_arr.shape[1] // strides[1]))
-        sampler = self.__sample_img(img_as_arr, strides, chunk)
+        sampler = self.__sample_img(img_as_arr, strides, self.chunk)
         x = 0
         y = 0
         for x, y, sample in sampler:
@@ -65,9 +68,7 @@ class Pyramide:
         output += self.apply_model(img, scale * 0.8, strides, padding, model)
         return output
 
-    @staticmethod
-    def draw_on_image(img, matched, strides, scale):
-        chunk = 36
+    def draw_on_image(self, img, matched, strides, scale):
         cpy = img.copy()
         cpy = cpy.resize((int(img.size[0] * scale), int(img.size[1] * scale)))
         draw = ImageDraw.Draw(cpy)
@@ -75,18 +76,50 @@ class Pyramide:
             for x, value in enumerate(line):
                 if value == 1:
                     draw.rectangle([x * strides[0], y * strides[1],
-                                    x * strides[0] + chunk, y * strides[1] + chunk],
+                                    x * strides[0] + self.chunk, y * strides[1] + self.chunk],
                                    fill=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 128))
         cpy = cpy.resize(img.size)
 
         return cpy
 
-    def test_pyramide(self, filename, threshold):
-        self.threshold = threshold
+    def get_visage_location(self, filename, strides=(9, 9)):
         test_img = Image.open(filename).convert('L')
 
-        out = self.apply_model(test_img, 1, (9, 9), None, None)
+        out = self.apply_model(test_img, 0.25, strides, None, None)
 
+        return out
+
+    def add_false_positive_to_negative_db(self, directory_path,
+                                          save_path="/home/francois/Documents/tmp/test_image_crop/IMG_C{}_{}_{}.png",
+                                          strides=(9, 9)):
+        number_of_analyzed = 0
+        passing = True
+        for k, path in enumerate(glob.iglob("{}/*".format(directory_path))):
+            print(path)
+            try:
+                visage_location = self.get_visage_location(path, strides)
+
+                image_to_crop = Image.open(path)
+                for labels_grid, scale in visage_location:
+                    for j, line in enumerate(labels_grid):
+                        for i, label in enumerate(line):
+                            number_of_analyzed += 1
+                            if label == 1:
+                                crop(save_path.format(k, i, j),
+                                     image_to_crop, (i, j),
+                                     scale,
+                                     strides,
+                                     self.chunk)
+            except:
+                print('Unable to load image {}, doesn\'t matter, skip'.format(path))
+
+        print("number of analyzed : ", number_of_analyzed)
+
+    def test_pyramide(self, filename, strides=(9, 9)):
+
+        test_img = Image.open(filename).convert('L')
+
+        out = self.apply_model(test_img, 1, strides, None, None)
         t2 = test_img.copy().convert('RGBA')
 
         blank = Image.new(mode='RGBA', size=t2.size, color=(0, 0, 0, 0))
