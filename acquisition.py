@@ -9,7 +9,7 @@ COLS = 36
 data_directory = "start_deep/"
 train_directory = data_directory + "train_images/"
 positives_path = data_directory + "positives.txt"
-negatives_path = data_directory + "hard_neg_2_iter.txt"
+negatives_path = data_directory + "negatives.txt"
 
 
 def get_trainset_list(positives_number=1000, negatives_number=1000):

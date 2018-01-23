@@ -15,7 +15,6 @@ from acquisition import get_trainset_list, prep_data
 
 class CustomModel:
     def __init__(self):
-
         pool_func = MaxPooling2D(pool_size=(2, 2), strides=None, padding="same")
 
         conv_1_func = Conv2D(filters=4, kernel_size=(5, 5), strides=1, padding="same", activation="relu")
