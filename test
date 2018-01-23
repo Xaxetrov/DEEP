@@ -1,0 +1,19 @@
+def select_triplets(anchors, labels):
+    anchors_embeddings = encoder.predict(anchors)
+    distances = cdist(anchors_embeddings, anchors_embeddings, metric='cosine')
+    positives_labels = []
+    negatives_labels = []
+    for i, line in enumerate(distances):
+        positives_distances = distances.copy()
+        positives_distances(np.where(labels!=labels[i])) *= 0
+        max_positive = positives_distances.max()
+        positives_labels.append(np.argmax(positives_distances))
+        negative_distances = distances.copy()
+        negative_distances(np.where(labels==labels[i])) *= 0
+        negative_distances(np.where(negative_distances<=max_positive)) *= 0
+        negatives_labels.append(np.argmin(negative_distances))
+        
+    return [anchors, anchors.copy()[positives_labels], anchors.copy()[negatives_labels], labels]
+    
+    
+        
