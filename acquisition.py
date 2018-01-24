@@ -59,6 +59,8 @@ def shuffle_and_cut(set_, labels, number):
 def get_trainset_list(positives_number=1000, negatives_number=1000):
     negatives_gen = get_negatives(negatives_number)
     negatives = list(negatives_gen)
+    negatives_number = len(negatives)
+    positives_number = negatives_number
     negative_images, negative_labels = zip(*negatives)
     negative_images_rnd, negative_labels_rnd = shuffle_and_cut(negative_images, negative_labels, negatives_number)
 
@@ -101,12 +103,13 @@ def prep_data(images):
     return data
 
 
-def save_hard_images(threshold_list=(0.9999, 0.999, 0.99, 0.97, 0.95, 0.9, 0.8, 0.7, 0.5), image_number=1250):
+def save_hard_images(threshold_list=(0.999, 0.99, 0.97, 0.95, 0.9, 0.8, 0.7, 0.5), image_number=1250):
 
     CustomModel = import_model()
-    model = CustomModel()
+    model = CustomModel("full_autoencoder.wnn")
     factor = 1
     for i, threshold in enumerate(threshold_list):
+        model.model_to_train.save_weights("full_autoencoder{}.wnn".format(threshold))
         print("acquisition::get_hard_images : threshold :", threshold)
         try:
 
@@ -122,9 +125,9 @@ def save_hard_images(threshold_list=(0.9999, 0.999, 0.99, 0.97, 0.95, 0.9, 0.8, 
                                                                          str(threshold)),
                                                   strides=(9, 9))
 
-        pyramid = Pyramid(model, threshold_list[max(0, i-1)])
-        pyramid.test_pyramide('photo_famille.jpeg')
-
+        pyramid = Pyramid(model, 0.9999)
+        pyramid.test_pyramide('photo_famille2.jpg')
+        model.model_to_train.save_weights("full_autoencoder{}.wnn".format(threshold))
         factor *= 0.8
         model.recompile(factor)
 

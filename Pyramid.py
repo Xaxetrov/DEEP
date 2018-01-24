@@ -97,7 +97,6 @@ class Pyramid:
                                           strides=(9, 9)):
         number_of_analyzed = 0
         for k, path in enumerate(glob.iglob("{}/*".format(directory_path))):
-            print(path)
             try:
                 visage_location = self.get_visage_location(path, strides)
 
