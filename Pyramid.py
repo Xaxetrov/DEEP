@@ -1,5 +1,7 @@
 import random
 import glob
+import os
+
 import numpy as np
 from PIL import Image
 from PIL import ImageDraw
@@ -90,10 +92,10 @@ class Pyramid:
         return out
 
     def add_false_positive_to_negative_db(self, directory_path,
-                                          save_path="/home/francois/Documents/tmp/test_image_crop/IMG_C{}_{}_{}.png",
+                                          save_path="/home/francois/Documents/tmp/test_image_crop",
+                                          save_format="IMG_{}_{}_{}.png",
                                           strides=(9, 9)):
         number_of_analyzed = 0
-        passing = True
         for k, path in enumerate(glob.iglob("{}/*".format(directory_path))):
             print(path)
             try:
@@ -105,12 +107,12 @@ class Pyramid:
                         for i, label in enumerate(line):
                             number_of_analyzed += 1
                             if label == 1:
-                                crop(save_path.format(k, i, j),
+                                crop(os.path.join(save_path, save_format).format(k, i, j),
                                      image_to_crop, (i, j),
                                      scale,
                                      strides,
                                      self.chunk)
-            except:
+            except IOError:
                 print('Unable to load image {}, doesn\'t matter, skip'.format(path))
 
         print("number of analyzed : ", number_of_analyzed)
