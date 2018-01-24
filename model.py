@@ -7,6 +7,7 @@ from keras.layers import Flatten
 from keras.models import Model
 from keras.layers import Input
 from keras.utils.np_utils import to_categorical
+from keras import optimizers
 
 import numpy as np
 
@@ -34,9 +35,12 @@ class CustomModel:
 
         self.model_to_train.compile('adam', 'categorical_crossentropy', ['accuracy'])
 
-    def train(self):
+        self.epochs = 25
 
-        positive_images, positive_labels, negative_images, negative_labels = get_trainset_list(700, 700)
+    def train(self, positive_images=700, negative_images=700):
+
+        positive_images, positive_labels, negative_images, negative_labels = get_trainset_list(positive_images,
+                                                                                               negative_images)
 
         mischung_images = np.concatenate((positive_images, negative_images), axis=0)
         mischung_labels = np.concatenate((positive_labels, negative_labels))
@@ -49,5 +53,13 @@ class CustomModel:
         mischung_labels = mischung_labels[indices]
         mischung_images = np.expand_dims(mischung_images, axis=3)
 
-        self.model_to_train.fit(x=mischung_images, y=to_categorical(mischung_labels), batch_size=32, epochs=25,
+        self.model_to_train.fit(x=mischung_images, y=to_categorical(mischung_labels), batch_size=32, epochs=self.epochs,
                                 validation_split=0.1, shuffle=True)
+
+    def predict(self, image):
+        return self.model_to_train.predict(image)
+
+    def recompile(self, factor):
+        self.model_to_train.compile(optimizers.Adam(lr=0.001*factor), 'categorical_crossentropy', ['accuracy'])
+        self.epochs /= factor
+        self.epochs = int(self.epochs)
